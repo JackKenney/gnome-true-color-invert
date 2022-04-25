@@ -24,7 +24,7 @@ const TrueInvertWindowEffect = new GObject.registerClass({
 			void main() {
 				vec4 c = texture2D(tex, cogl_tex_coord_in[0].st);
 
-				float white_bias = 0.1; // lower -> higher contrast
+				float white_bias = 0.08; // lower -> higher contrast
 				float m = 1.0 + white_bias;
 				
 				float shift = white_bias + c.a - min(c.r, min(c.g, c.b)) - max(c.r, max(c.g, c.b));
@@ -62,11 +62,19 @@ InvertWindow.prototype = {
 			if (meta_window.has_focus()) {
 				if (actor.get_effect('invert-color')) {
 					actor.remove_effect_by_name('invert-color');
+					// log(Meta.ShadowMode.AUTO);
+					// disableNoShadow();
+					// actor.shadow_mode = Meta.ShadowMode.AUTO;
+					log(actor.shadow_mode)
 					delete meta_window._invert_window_tag;
 				}
 				else {
 					let effect = new TrueInvertWindowEffect();
 					actor.add_effect_with_name('invert-color', effect);
+					// log(Meta.ShadowMode.FORCED_OFF);
+					// actor.shadow_mode = Meta.ShadowMode.FORCED_OFF;
+					log(actor.shadow_mode)
+					// enableNoShadow();
 					meta_window._invert_window_tag = true;
 				}
 			}
@@ -102,7 +110,19 @@ InvertWindow.prototype = {
 
 let invert_window;
 
+let no_shadow_params = [];
+let old_focused_shadow_params = [], old_unfocused_shadow_params = [];
+let shadow_factory;
+let shadow_classes;
+
 function init() {
+    no_shadow_params = new Meta.ShadowParams(
+        {radius: 0, top_fade: 0, x_offset: 0, y_offset: 0, opacity: 0}
+    );
+
+    shadow_classes = ["normal", "dialog", "modal_dialog", "utility", "border", "menu", "popup-menu", "dropdown-menu", "attached"];
+
+    shadow_factory = Meta.ShadowFactory.get_default();
 }
 
 function enable() {
@@ -115,3 +135,24 @@ function disable() {
 	invert_window = null;
 }
 
+
+function enableNoShadow() {
+	for (const shadow_class of shadow_classes) {
+        // log existing settings
+        old_focused_shadow_params[shadow_class] = shadow_factory.get_params(shadow_class, true);
+        old_unfocused_shadow_params[shadow_class] = shadow_factory.get_params(shadow_class, false);
+        // remove shadows
+        shadow_factory.set_params(shadow_class, true, no_shadow_params);
+        shadow_factory.set_params(shadow_class, false, no_shadow_params);
+    }
+}
+
+function disableNoShadow() {
+	for (const shadow_class of shadow_classes) {
+        // restore previous settings
+        shadow_factory.set_params(
+            shadow_class, true, old_focused_shadow_params[shadow_class]);
+        shadow_factory.set_params(
+            shadow_class, false, old_unfocused_shadow_params[shadow_class]);
+    }
+}
