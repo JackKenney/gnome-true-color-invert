@@ -9,9 +9,10 @@
     "3.38",
     "40",
     "41",
-    "42"
+    "42",
+    "43"
   ],
   "url": "https://github.com/jackkenney/gnome-true-color-invert",
   "uuid": "true-color-invert@jackkenney",
-  "version": 10
+  "version": 12_indev
 }
